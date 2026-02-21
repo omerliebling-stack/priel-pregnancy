@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="מעקב הריון - פריאל">
+<title>🌸 מעקב הריון – פריאל</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(180deg, #FFF5F7 0%, #FFFFFF 30%);
+  color: #2D3748; max-width: 500px; margin: 0 auto; min-height: 100vh;
+  direction: rtl; overflow-x: hidden;
+}
+button { cursor: pointer; font-family: inherit; }
+input, textarea { font-family: inherit; }
+
+.loading { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; }
+.loading-icon { font-size:60px; animation: pulse 1.5s infinite; }
+.loading-text { color:#E8739A; font-size:18px; margin-top:16px; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+.setup-container {
+  display:flex; align-items:center; justify-content:center; min-height:100vh;
+  background:linear-gradient(135deg, #FFF5F7 0%, #FDE8EF 50%, #F5E6FF 100%); padding:20px;
+}
+.setup-card {
+  background:white; border-radius:24px; padding:40px 28px; max-width:400px; width:100%;
+  box-shadow:0 20px 60px rgba(232,115,154,0.15); text-align:center;
+  animation: fadeIn 0.6s ease;
+}
+.setup-icon { font-size:56px; margin-bottom:8px; }
+.setup-title { font-size:26px; font-weight:700; margin:8px 0; }
+.setup-subtitle { font-size:18px; color:#E8739A; font-weight:500; margin:4px 0 8px; }
+.setup-personal { font-size:15px; color:#718096; margin-bottom:16px; line-height:1.6; }
+.setup-personal strong { color:#E8739A; }
+.setup-field { margin-bottom:20px; text-align:right; }
+.setup-label { display:block; font-size:14px; font-weight:600; color:#4A5568; margin-bottom:8px; }
+.setup-input {
+  width:100%; padding:12px 16px; border-radius:12px; border:2px solid #F0E6EF;
+  font-size:16px; outline:none; transition:border-color 0.2s;
+}
+.setup-input:focus { border-color:#E8739A; }
+.embryo-picker { display:flex; gap:12px; }
+.embryo-btn {
+  flex:1; padding:12px; border-radius:12px; border:2px solid #F0E6EF;
+  background:white; font-size:16px; font-weight:600; transition:all 0.2s;
+}
+.embryo-btn.active { border-color:#E8739A; background:#FFF5F7; color:#E8739A; }
+.setup-btn {
+  width:100%; padding:14px; border-radius:16px; border:none;
+  background:linear-gradient(135deg, #E8739A, #D63384); color:white;
+  font-size:18px; font-weight:700; margin-top:12px; transition:transform 0.2s;
+}
+.setup-btn:disabled { opacity:0.5; }
+.setup-btn:active { transform:scale(0.97); }
+
+.header {
+  background:linear-gradient(135deg, #E8739A 0%, #D63384 100%);
+  padding:20px 20px 16px; color:white; border-radius:0 0 24px 24px;
+}
+.header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.header-title { font-size:20px; font-weight:700; }
+.header-greeting { font-size:14px; opacity:0.9; margin-bottom:12px; }
+.settings-btn { background:rgba(255,255,255,0.2); border:none; border-radius:10px; padding:6px 10px; font-size:18px; }
+.header-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.week-badge { background:rgba(255,255,255,0.2); border-radius:16px; padding:10px 16px; display:flex; flex-direction:column; align-items:center; }
+.week-number { font-size:20px; font-weight:700; }
+.week-days { font-size:12px; opacity:0.9; }
+.due-info { text-align:left; display:flex; flex-direction:column; }
+.due-label { font-size:11px; opacity:0.8; }
+.due-date { font-size:14px; font-weight:600; }
+.due-days { font-size:12px; opacity:0.9; }
+.progress-bar { background:rgba(255,255,255,0.2); border-radius:10px; height:12px; overflow:hidden; position:relative; }
+.progress-fill { background:rgba(255,255,255,0.8); height:100%; border-radius:10px; transition:width 0.5s ease; position:relative; }
+.progress-baby { position:absolute; right:-4px; top:-6px; font-size:18px; }
+.trimester-labels { display:flex; justify-content:space-between; margin-top:4px; }
+.trimester-labels span { font-size:11px; opacity:0.5; }
+.trimester-labels span.active { font-weight:700; opacity:1; }
+
+.nav { display:flex; padding:12px 16px; background:white; border-bottom:1px solid #F0E6EF; position:sticky; top:0; z-index:10; }
+.nav-btn { flex:1; padding:10px 0; border:none; background:none; font-size:13px; font-weight:500; color:#A0AEC0; border-bottom:3px solid transparent; transition:all 0.2s; }
+.nav-btn.active { color:#E8739A; font-weight:700; border-bottom-color:#E8739A; }
+
+.date-selector { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:white; border-bottom:1px solid #F0E6EF; }
+.date-arrow { background:none; border:none; font-size:18px; color:#E8739A; padding:8px 12px; }
+.date-display { text-align:center; }
+.date-text { font-size:15px; font-weight:600; }
+.today-link { display:block; margin:4px auto 0; background:none; border:none; color:#E8739A; font-size:12px; text-decoration:underline; }
+
+.main { padding:0 16px 120px; }
+
+.week-info { background:linear-gradient(135deg, #FFF5F7, #FDE8EF); border-radius:20px; padding:20px; margin:16px 0; border:1px solid #F0E6EF; animation:fadeIn 0.4s ease; }
+.week-info h2 { font-size:19px; font-weight:700; margin-bottom:4px; }
+.week-info .subtitle { font-size:14px; color:#E8739A; font-weight:500; margin-bottom:8px; }
+.week-info .personal-msg { font-size:13px; color:#8B5CF6; font-weight:500; background:rgba(139,92,246,0.08); padding:8px 12px; border-radius:10px; margin-bottom:8px; }
+.tip { font-size:13px; color:#4A5568; margin-bottom:6px; line-height:1.5; }
+
+.completion-card { display:flex; align-items:center; gap:16px; background:white; border-radius:16px; padding:16px 20px; margin:12px 0; box-shadow:0 2px 8px rgba(0,0,0,0.04); border:1px solid #F0E6EF; }
+.completion-label { font-size:16px; font-weight:600; color:#4A5568; }
+
+.section { margin:20px 0; }
+.section-title { font-size:17px; font-weight:700; margin-bottom:12px; }
+
+.task-item { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:14px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; border-right:4px solid; animation:slideIn 0.3s ease; }
+.task-item:active { transform:scale(0.98); }
+.checkbox { width:26px; height:26px; border-radius:8px; border:2px solid #CBD5E0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; color:white; transition:all 0.2s; }
+.checkbox.done { background:#48BB78; border-color:#48BB78; }
+.task-text { flex:1; font-size:14px; line-height:1.4; }
+.task-text.done { text-decoration:line-through; opacity:0.7; }
+.category-badge { font-size:10px; padding:3px 8px; border-radius:8px; background:rgba(0,0,0,0.05); color:#718096; font-weight:500; white-space:nowrap; }
+
+.mood-container { display:flex; gap:8px; justify-content:center; }
+.mood-btn { display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 14px; border-radius:14px; border:2px solid #F0E6EF; background:white; transition:all 0.2s; }
+.mood-btn:active { transform:scale(0.95); }
+.mood-btn.active { border-color:#E8739A; background:#FFF5F7; transform:scale(1.05); }
+.mood-btn .emoji { font-size:28px; }
+.mood-btn .label { font-size:11px; color:#718096; }
+
+.symptoms-grid { display:flex; flex-wrap:wrap; gap:8px; }
+.symptom-btn { padding:8px 14px; border-radius:20px; border:1px solid #E2E8F0; background:white; font-size:13px; transition:all 0.2s; color:#4A5568; }
+.symptom-btn:active { transform:scale(0.95); }
+.symptom-btn.active { background:#FFF5F7; border-color:#E8739A; color:#E8739A; font-weight:600; }
+
+.note-input { display:flex; gap:8px; margin-bottom:12px; }
+.note-field { flex:1; padding:10px 14px; border-radius:12px; border:2px solid #F0E6EF; font-size:14px; outline:none; direction:rtl; }
+.note-field:focus { border-color:#E8739A; }
+.note-add-btn { width:42px; height:42px; border-radius:12px; border:none; background:#E8739A; color:white; font-size:22px; font-weight:700; }
+.note-item { padding:10px 14px; background:#FAFAFA; border-radius:10px; margin-bottom:6px; display:flex; gap:10px; animation:fadeIn 0.3s ease; }
+.note-time { font-size:11px; color:#A0AEC0; white-space:nowrap; }
+.note-text { font-size:14px; color:#4A5568; }
+
+.milestone-item { display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(90deg, #FFF8E7, #FFFFFF); border-radius:12px; margin-bottom:8px; border:1px solid rgba(236,201,75,0.2); }
+.milestone-icon { font-size:20px; }
+.milestone-text { font-size:14px; font-weight:500; }
+
+/* Share summary button */
+.share-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px; border-radius:14px; border:2px solid #8B5CF6; background:rgba(139,92,246,0.06); color:#8B5CF6; font-size:15px; font-weight:600; margin:16px 0; transition:all 0.2s; }
+.share-btn:active { transform:scale(0.97); background:rgba(139,92,246,0.12); }
+
+/* Week view */
+.week-day-card { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:white; border-radius:14px; margin-bottom:8px; border:1px solid #F0E6EF; cursor:pointer; }
+.week-day-card:active { transform:scale(0.98); }
+.week-day-card.today { border:2px solid #E8739A; background:#FFF5F7; }
+.week-day-header { display:flex; align-items:center; gap:10px; }
+.week-day-name { font-size:14px; font-weight:600; min-width:36px; }
+.week-day-date { font-size:13px; color:#718096; }
+.week-day-progress { display:flex; align-items:center; gap:10px; }
+.mini-progress { width:80px; height:6px; background:#F0E6EF; border-radius:4px; overflow:hidden; }
+.mini-progress-fill { height:100%; background:#E8739A; border-radius:4px; transition:width 0.3s; }
+.week-day-rate { font-size:13px; font-weight:600; color:#E8739A; min-width:32px; text-align:left; }
+
+/* Timeline */
+.timeline-item { display:flex; gap:14px; }
+.timeline-line { display:flex; flex-direction:column; align-items:center; width:20px; }
+.timeline-dot { width:16px; height:16px; border-radius:50%; flex-shrink:0; z-index:1; background:#E2E8F0; transition:all 0.3s; }
+.timeline-dot.past { background:#E8739A; }
+.timeline-dot.current { background:#FFD700; box-shadow:0 0 0 4px rgba(255,215,0,0.3); }
+.timeline-connector { width:2px; flex:1; min-height:30px; background:#E2E8F0; }
+.timeline-connector.past { background:#E8739A; }
+.timeline-content { flex:1; padding:12px 14px; border-radius:12px; margin-bottom:8px; display:flex; align-items:center; gap:10px; background:white; border:1px solid #F0E6EF; }
+.timeline-content.current { background:#FFF8E7; border:2px solid #FFD700; }
+.timeline-content.future { opacity:0.6; }
+.timeline-week { font-size:13px; font-weight:700; color:#E8739A; min-width:55px; }
+.timeline-label { flex:1; font-size:14px; }
+.timeline-check { font-size:16px; }
+
+/* Settings */
+.settings-card { background:white; border-radius:20px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.04); border:1px solid #F0E6EF; }
+.settings-field { margin-bottom:20px; }
+.settings-label { display:block; font-size:14px; font-weight:600; color:#4A5568; margin-bottom:8px; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:20px 0; }
+.info-item { background:#FFF5F7; border-radius:14px; padding:14px; text-align:center; }
+.info-label { font-size:12px; color:#718096; display:block; }
+.info-value { font-size:22px; font-weight:700; color:#E8739A; display:block; margin-top:4px; }
+.reset-btn { width:100%; padding:12px; border-radius:12px; border:2px solid #FC8181; background:white; color:#FC8181; font-size:14px; font-weight:600; margin-top:16px; }
+.disclaimer { font-size:12px; color:#A0AEC0; text-align:center; margin-top:16px; line-height:1.6; padding:12px; background:#FAFAFA; border-radius:10px; }
+
+/* Toast notification */
+.toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#2D3748; color:white; padding:12px 24px; border-radius:12px; font-size:14px; font-weight:500; z-index:100; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">
+  <div class="loading-icon">🤰</div>
+  <p class="loading-text">רגע, פריאל...</p>
+</div>
+
+<div id="setup" class="setup-container hidden">
+  <div class="setup-card">
+    <div class="setup-icon">🌸</div>
+    <h1 class="setup-title">שלום פריאל! 💕</h1>
+    <p class="setup-subtitle">המעקב האישי שלך להריון</p>
+    <p class="setup-personal">עומר הכין לך את האפליקציה הזו כדי ללוות אותך לאורך כל ההריון – <strong>עם אהבה!</strong></p>
+    <div class="setup-field">
+      <label class="setup-label">📅 תאריך החזרת העוברון</label>
+      <input type="date" id="setupDate" class="setup-input">
+    </div>
+    <div class="setup-field">
+      <label class="setup-label">🔬 יום העוברון בהחזרה</label>
+      <div class="embryo-picker">
+        <button class="embryo-btn" onclick="setEmbryoDay(3)" id="embryo3">יום 3</button>
+        <button class="embryo-btn active" onclick="setEmbryoDay(5)" id="embryo5">יום 5</button>
+      </div>
+    </div>
+    <button class="setup-btn" id="startBtn" onclick="startApp()" disabled>🚀 יאללה, מתחילות!</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header class="header">
+    <div class="header-top">
+      <h1 class="header-title">🌸 המעקב של פריאל</h1>
+      <button class="settings-btn" onclick="showView('settings')">⚙️</button>
+    </div>
+    <div class="header-greeting" id="greeting"></div>
+    <div class="header-info">
+      <div class="week-badge">
+        <span class="week-number" id="weekNum"></span>
+        <span class="week-days" id="weekDays"></span>
+      </div>
+      <div class="due-info">
+        <span class="due-label">תאריך לידה משוער</span>
+        <span class="due-date" id="dueDate"></span>
+        <span class="due-days" id="dueDays"></span>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"><span class="progress-baby">🤰</span></div>
+    </div>
+    <div class="trimester-labels">
+      <span id="tri1">טרימסטר 1</span>
+      <span id="tri2">טרימסטר 2</span>
+      <span id="tri3">טרימסטר 3</span>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <button class="nav-btn active" id="navToday" onclick="showView('today')">📋 היום</button>
+    <button class="nav-btn" id="navWeek" onclick="showView('week')">📅 שבוע</button>
+    <button class="nav-btn" id="navTimeline" onclick="showView('timeline')">🗓️ ציר זמן</button>
+  </nav>
+
+  <div class="date-selector" id="dateSelector">
+    <button class="date-arrow" onclick="changeDate(-1)">◀</button>
+    <div class="date-display">
+      <span class="date-text" id="dateText"></span>
+      <button class="today-link hidden" id="todayLink" onclick="goToday()">חזרה להיום</button>
+    </div>
+    <button class="date-arrow" onclick="changeDate(1)">▶</button>
+  </div>
+
+  <main class="main" id="mainContent"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = "priel-pregnancy-v3";
+const NAME = "פריאל";
+
+let state = {
+  transferDate: null, embryoDay: 5,
+  completedTasks: {}, notes: {}, symptoms: {}, mood: {},
+  selectedDate: new Date().toISOString().split("T")[0],
+  currentView: "today"
+};
+
+// ─── PERSONAL MESSAGES ───
+const personalMessages = {
+  3: `${NAME} יקרה, את בשלב הכי מרגש – העוברון מתחיל להשתרש! שמרי על עצמך 💕`,
+  4: `${NAME}, ממתינות לבטא בהתרגשות! תזכרי שכל יום שעובר זה סימן טוב 🌟`,
+  5: `${NAME}, הלב הקטן מתחיל לפעום! את עושה עבודה מדהימה 💓`,
+  6: `${NAME}, היום אולי תראי פעימות לב! רגע קסום שאי אפשר לתאר ✨`,
+  7: `${NAME}, העובר שלך גדל בקצב מדהים! המשיכי להיות חזקה 💪`,
+  8: `${NAME}, סוף חודש שני! את גיבורה אמיתית 👑`,
+  9: `${NAME}, העובר שלך כבר נראה כמו תינוק קטנטן! 🥰`,
+  10: `${NAME}, עברת את השלב הקריטי! סיבה לחגוג 🎉`,
+  11: `${NAME}, בדיקות חשובות השבוע – הכל יהיה בסדר! 🙏`,
+  12: `${NAME}!!! סוף טרימסטר ראשון! ציון דרך ענק! 🎊🎉💕`,
+  13: `${NAME}, ברוכה הבאה לטרימסטר השני – תקופת הזהב! ☀️`,
+  16: `${NAME}, ייתכן שתרגישי תנועות ראשונות! כמה מרגש! 🦋`,
+  20: `${NAME}, חצי דרך!!! יופי של הישג! 🏆`,
+  24: `${NAME}, התינוק שלך יכול לשרוד – ציון דרך רפואי חשוב! 💖`,
+  28: `${NAME}, טרימסטר שלישי! הישורת האחרונה מתחילה! 🏁`,
+  32: `${NAME}, התינוק מתמקם! עוד מעט פה! 🤱`,
+  36: `${NAME}, כמעט שם! הכל מוכן? 🧸`,
+  38: `${NAME}, התינוק יכול להגיע בכל רגע! כמה מרגש! 🎀`,
+  40: `${NAME}, זה הזמן!!! בהצלחה מתוקה! 🌟💕🎉`
+};
+
+function getPersonalMsg(week) {
+  if (personalMessages[week]) return personalMessages[week];
+  const keys = Object.keys(personalMessages).map(Number).sort((a,b)=>a-b);
+  let c = keys[0]; for (const k of keys) { if (k <= week) c = k; else break; }
+  return personalMessages[c];
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 6) return `לילה טוב, ${NAME} 🌙`;
+  if (h < 12) return `בוקר טוב, ${NAME} ☀️`;
+  if (h < 17) return `צהריים טובים, ${NAME} 🌤️`;
+  if (h < 21) return `ערב טוב, ${NAME} 🌅`;
+  return `לילה טוב, ${NAME} 🌙`;
+}
+
+// ─── WEEK DATA ───
+const weeklyGuidance = {
+  3: { title: "שבוע 3 – השתלה והתחלת הריון", subtitle: "העובר מתחיל להשתרש ברחם", tips: ["המשיכי בנוחה – הגוף עובד קשה", "שתי לפחות 2 ליטר מים ביום", "המנעי ממאמצים כבדים"], dailyTasks: [{ id:"prog", text:"💊 נטילת פרוגסטרון (לפי הנחיות הרופא)", cat:"medication" }, { id:"folic", text:"💊 חומצה פולית 400mcg", cat:"medication" }, { id:"water", text:"💧 שתיית 8-10 כוסות מים", cat:"nutrition" }, { id:"rest", text:"🛋️ מנוחה של לפחות 30 דקות", cat:"wellness" }, { id:"noHeavy", text:"🚫 הימנעות ממאמץ פיזי כבד", cat:"wellness" }, { id:"temp", text:"🌡️ מדידת טמפרטורה (אם הומלץ)", cat:"medical" }], milestones: ["בדיקת Beta HCG ראשונה (יום 10-12)", "בדיקת Beta HCG שנייה (יום 14)"] },
+  4: { title: "שבוע 4 – אישור הריון", subtitle: "רמות ה-HCG עולות", tips: ["ממתינות לתוצאות הבטא", "המשיכי בתרופות כרגיל", "שמרי על שגרה רגועה"], dailyTasks: [{ id:"prog", text:"💊 נטילת פרוגסטרון", cat:"medication" }, { id:"folic", text:"💊 חומצה פולית", cat:"medication" }, { id:"water", text:"💧 שתיית מים מספקת", cat:"nutrition" }, { id:"protein", text:"🥚 ארוחה עשירה בחלבון", cat:"nutrition" }, { id:"walk", text:"🚶‍♀️ הליכה קלה 15-20 דקות", cat:"exercise" }, { id:"sleep", text:"😴 שינה 8 שעות לפחות", cat:"wellness" }], milestones: ["אישור הריון חיובי!", "תיאום אולטרסאונד ראשון (שבוע 6-7)"] },
+  5: { title: "שבוע 5 – לב מתחיל לפעום", subtitle: "העובר בגודל גרגר שומשום", tips: ["תסמינים ראשונים: רגישות בחזה, עייפות", "בחילות בוקר עשויות להתחיל", "ארוחות קטנות ותכופות"], dailyTasks: [{ id:"prog", text:"💊 פרוגסטרון (לפי מרשם)", cat:"medication" }, { id:"folic", text:"💊 חומצה פולית + ויטמין להריון", cat:"medication" }, { id:"smallMeals", text:"🍽️ 5-6 ארוחות קטנות", cat:"nutrition" }, { id:"ginger", text:"🫚 תה ג'ינג'ר נגד בחילות", cat:"nutrition" }, { id:"water", text:"💧 שתייה מרובה", cat:"nutrition" }, { id:"rest", text:"🛋️ מנוחה – העייפות נורמלית!", cat:"wellness" }], milestones: ["אולטרסאונד ראשון (שק הריון)", "בדיקות דם בסיסיות"] },
+  6: { title: "שבוע 6 – פעימות לב!", subtitle: "העובר בגודל עדשה", tips: ["אולטרסאונד – לראות פעימות לב!", "בחילות עשויות להתגבר", "חשוב לנוח"], dailyTasks: [{ id:"prog", text:"💊 פרוגסטרון", cat:"medication" }, { id:"prenatal", text:"💊 ויטמין פרנטל", cat:"medication" }, { id:"nausea", text:"🍋 טיפול בבחילות", cat:"nutrition" }, { id:"iron", text:"🥩 מזונות עשירים בברזל", cat:"nutrition" }, { id:"gentleWalk", text:"🚶‍♀️ הליכה קלה", cat:"exercise" }, { id:"emotions", text:"💚 מדיטציה/נשימות", cat:"wellness" }], milestones: ["אישור פעימות לב", "תיאום מעקב הריון קבוע"] },
+  7: { title: "שבוע 7 – התפתחות מואצת", subtitle: "העובר בגודל אוכמנית", tips: ["איברים פנימיים מתפתחים", "עייפות קיצונית – נורמלי", "תזונה מאוזנת"], dailyTasks: [{ id:"prog", text:"💊 פרוגסטרון", cat:"medication" }, { id:"prenatal", text:"💊 ויטמין פרנטל + אומגה 3", cat:"medication" }, { id:"calcium", text:"🥛 סידן", cat:"nutrition" }, { id:"veggies", text:"🥗 ירקות ופירות", cat:"nutrition" }, { id:"hydrate", text:"💧 2 ליטר מים", cat:"nutrition" }, { id:"nap", text:"😴 תנומה קצרה", cat:"wellness" }], milestones: ["מעקב אולטרסאונד", "בדיקות דם"] },
+  8: { title: "שבוע 8 – סוף חודש שני", subtitle: "העובר בגודל פטל", tips: ["הבחילות בשיא – יעברו!", "לחץ על שלפוחית השתן", "המשיכי בתרופות"], dailyTasks: [{ id:"prog", text:"💊 פרוגסטרון", cat:"medication" }, { id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"fiber", text:"🌾 סיבים תזונתיים", cat:"nutrition" }, { id:"protein", text:"🥚 חלבון בכל ארוחה", cat:"nutrition" }, { id:"kegel", text:"💪 תרגילי קגל", cat:"exercise" }, { id:"journal", text:"📝 יומן הריון", cat:"wellness" }], milestones: ["לתאם בדיקת NT לשבוע 11-13"] },
+  9: { title: "שבוע 9 – זנב נעלם!", subtitle: "העובר נראה כתינוק", tips: ["שינויים בעור ושיער", "אכלי בריא ונוחי"], dailyTasks: [{ id:"prog", text:"💊 פרוגסטרון", cat:"medication" }, { id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"water", text:"💧 שתייה", cat:"nutrition" }, { id:"balanced", text:"🍽️ ארוחות מאוזנות", cat:"nutrition" }, { id:"stretch", text:"🧘 מתיחות", cat:"exercise" }, { id:"skincare", text:"🧴 קרם נגד סימני מתיחה", cat:"wellness" }], milestones: ["מעקב רופא"] },
+  10: { title: "שבוע 10 – סוף שלב קריטי", subtitle: "כל האיברים קיימים!", tips: ["סימן מצוין!", "ייתכן הפסקת פרוגסטרון", "הבטן מתחילה להיראות"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"water", text:"💧 שתייה", cat:"nutrition" }, { id:"omega", text:"🐟 אומגה 3", cat:"nutrition" }, { id:"walk", text:"🚶‍♀️ הליכה 20-30 דקות", cat:"exercise" }, { id:"kegel", text:"💪 תרגילי קגל", cat:"exercise" }, { id:"connect", text:"💕 זמן עם עומר", cat:"wellness" }], milestones: ["ייתכן הפסקת פרוגסטרון", "תכנון בדיקת NT"] },
+  11: { title: "שבוע 11 – בדיקות סקירה", subtitle: "העובר בגודל תאנה", tips: ["בדיקת שקיפות עורפית", "בחילות יורדות", "אנרגיה חוזרת"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"protein", text:"🥩 חלבון", cat:"nutrition" }, { id:"dairy", text:"🥛 סידן", cat:"nutrition" }, { id:"water", text:"💧 שתייה", cat:"nutrition" }, { id:"exercise", text:"🏊 פעילות מותאמת", cat:"exercise" }, { id:"breathe", text:"🧘 נשימות", cat:"wellness" }], milestones: ["בדיקת NT", "בדיקת דם משולבת"] },
+  12: { title: "שבוע 12 – סוף טרימסטר 1! 🎉", subtitle: "ציון דרך משמעותי", tips: ["הסיכון יורד משמעותית!", "זמן לבשר!", "הבטן נראית!"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"celebrate", text:"🎉 חגיגת ציון דרך!", cat:"wellness" }, { id:"nutrition", text:"🍽️ תזונה מגוונת", cat:"nutrition" }, { id:"exercise", text:"🚶‍♀️ פעילות גופנית", cat:"exercise" }, { id:"skincare", text:"🧴 טיפוח הבטן", cat:"wellness" }, { id:"dentist", text:"🦷 תור לרופא שיניים", cat:"medical" }], milestones: ["סוף טרימסטר 1! 🎉", "לבשר למשפחה!"] },
+  13: { title: "שבוע 13 – טרימסטר שני!", subtitle: "תקופת הזהב", tips: ["אנרגיה חוזרת!", "בחילות יורדות", "ליהנות!"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"exercise", text:"🏃‍♀️ פעילות מותאמת", cat:"exercise" }, { id:"water", text:"💧 שתייה", cat:"nutrition" }, { id:"iron", text:"🥬 ברזל", cat:"nutrition" }, { id:"photo", text:"📸 צילום בטן!", cat:"wellness" }], milestones: ["תחילת טרימסטר 2"] },
+  16: { title: "שבוע 16 – תנועות ראשונות?", subtitle: "העובר בגודל אבוקדו", tips: ["ייתכנו תנועות!", "הבטן גדלה", "תנוחה טובה"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"movement", text:"👶 שימי לב לתנועות!", cat:"medical" }, { id:"exercise", text:"🧘 יוגה להריון", cat:"exercise" }, { id:"posture", text:"🪑 תנוחה נכונה", cat:"wellness" }, { id:"water", text:"💧 שתייה", cat:"nutrition" }], milestones: ["תנועות ראשונות", "בדיקת AFP"] },
+  20: { title: "שבוע 20 – חצי דרך! 🎉", subtitle: "סקירת מערכות", tips: ["אולטרסאונד מפורט", "לדעת מין העובר?", "הבטן ניכרת"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"movement", text:"👶 מעקב תנועות", cat:"medical" }, { id:"exercise", text:"🏊 שחייה/הליכה", cat:"exercise" }, { id:"sleep", text:"😴 שינה על צד שמאל", cat:"wellness" }, { id:"stretchmarks", text:"🧴 שמן לבטן", cat:"wellness" }], milestones: ["סקירת מערכות!", "חצי דרך! 🎉"] },
+  24: { title: "שבוע 24 – כדאיות חיים", subtitle: "העובר שומע קולות", tips: ["ציון דרך רפואי", "בדיקת סוכר עומס"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים + ברזל", cat:"medication" }, { id:"kicks", text:"👶 ספירת בעיטות", cat:"medical" }, { id:"glucose", text:"🧪 בדיקת סוכר (חד פעמי)", cat:"medical" }, { id:"exercise", text:"🚶‍♀️ הליכה", cat:"exercise" }, { id:"music", text:"🎵 מוזיקה לעובר", cat:"wellness" }], milestones: ["בדיקת סוכר", "כדאיות חיים!"] },
+  28: { title: "שבוע 28 – טרימסטר שלישי!", subtitle: "הישורת האחרונה", tips: ["מעקב צמוד", "הכנה ללידה", "תיק בית חולים"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"kicks", text:"👶 ספירת בעיטות", cat:"medical" }, { id:"bp", text:"🩸 לחץ דם", cat:"medical" }, { id:"walk", text:"🚶‍♀️ הליכה", cat:"exercise" }, { id:"bag", text:"🧳 תיק בית חולים", cat:"wellness" }, { id:"course", text:"📚 קורס הכנה ללידה", cat:"wellness" }], milestones: ["טרימסטר 3!", "מעקב כל שבועיים"] },
+  32: { title: "שבוע 32 – העובר מתמקם", subtitle: "ראש למטה", tips: ["ספירת בעיטות", "צירי דמה", "מנוחה!"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"kicks", text:"👶 בעיטות", cat:"medical" }, { id:"rest", text:"🛋️ הרמת רגליים", cat:"wellness" }, { id:"breathe", text:"🧘 נשימות ללידה", cat:"exercise" }, { id:"bag", text:"🧳 השלמת תיק", cat:"wellness" }], milestones: ["אולטרסאונד מיקום"] },
+  36: { title: "שבוע 36 – כמעט!", subtitle: "העובר מוכן כמעט", tips: ["מעקב שבועי", "סימני לידה", "לוגיסטיקה"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"kicks", text:"👶 בעיטות", cat:"medical" }, { id:"monitor", text:"📊 מוניטור שבועי", cat:"medical" }, { id:"walk", text:"🚶‍♀️ הליכות", cat:"exercise" }, { id:"plan", text:"📋 תכנית לידה", cat:"wellness" }, { id:"car", text:"🚗 כיסא בטיחות", cat:"wellness" }], milestones: ["בדיקת GBS", "תכנית לידה"] },
+  38: { title: "שבוע 38 – מוכנה!", subtitle: "בכל רגע!", tips: ["הכל מוכן?", "סימני לידה", "ליהנות מהרגעים"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"kicks", text:"👶 בעיטות", cat:"medical" }, { id:"monitor", text:"📊 מוניטור", cat:"medical" }, { id:"signs", text:"🏥 סימני לידה", cat:"medical" }, { id:"rest", text:"😴 מנוחה", cat:"wellness" }], milestones: ["התינוק בשל!", "מוכנה!"] },
+  40: { title: "שבוע 40 – תאריך משוער! 🎉", subtitle: "הרגע הגדול!", tips: ["5% נולדים בדיוק בתאריך", "סבלנות!", "קשר עם הרופא"], dailyTasks: [{ id:"prenatal", text:"💊 ויטמינים", cat:"medication" }, { id:"kicks", text:"👶 בעיטות", cat:"medical" }, { id:"monitor", text:"📊 מוניטור יומי", cat:"medical" }, { id:"relax", text:"🧘 הרפיה", cat:"wellness" }, { id:"walk", text:"🚶‍♀️ הליכה", cat:"exercise" }], milestones: ["תאריך לידה! 🎉"] }
+};
+
+const catInfo = { medication:{bg:"#FFF0F5",border:"#FF69B4",label:"תרופות"}, nutrition:{bg:"#F0FFF4",border:"#48BB78",label:"תזונה"}, exercise:{bg:"#EBF8FF",border:"#4299E1",label:"פעילות"}, wellness:{bg:"#FFFFF0",border:"#ECC94B",label:"רווחה"}, medical:{bg:"#FFF5F5",border:"#FC8181",label:"רפואי"} };
+const commonSymptoms = ["בחילה","עייפות","כאב ראש","כאב גב","נפיחות","רגישות בחזה","סחרחורת","עצירות","נדודי שינה","צרבת"];
+const moods = [{emoji:"😊",label:"מצוין"},{emoji:"🙂",label:"טוב"},{emoji:"😐",label:"בינוני"},{emoji:"😔",label:"לא טוב"},{emoji:"😢",label:"קשה"}];
+const timelineMilestones = [{week:4,label:"אישור הריון"},{week:6,label:"פעימות לב"},{week:8,label:"סוף חודש 2"},{week:11,label:"בדיקת NT"},{week:12,label:"סוף טרימסטר 1 🎉"},{week:16,label:"תנועות ראשונות"},{week:20,label:"חצי דרך! סקירת מערכות"},{week:24,label:"כדאיות חיים"},{week:28,label:"טרימסטר 3"},{week:32,label:"העובר מתמקם"},{week:36,label:"מעקב שבועי"},{week:38,label:"מוכנה!"},{week:40,label:"תאריך לידה 🎉"}];
+
+// ─── HELPERS ───
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
+function load() { try { const d = localStorage.getItem(STORAGE_KEY); if(d) { Object.assign(state, JSON.parse(d)); return true; } } catch(e){} return false; }
+function getToday() { return new Date().toISOString().split("T")[0]; }
+function showToast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
+
+function calcPregnancy() {
+  if (!state.transferDate) return null;
+  const transfer = new Date(state.transferDate), sel = new Date(state.selectedDate);
+  const daysSince = Math.floor((sel - transfer) / 864e5);
+  const gestDays = daysSince + 14 + state.embryoDay;
+  const weeks = Math.floor(gestDays / 7), days = gestDays % 7;
+  const lmp = new Date(transfer); lmp.setDate(lmp.getDate() - (14 + state.embryoDay));
+  const due = new Date(lmp); due.setDate(due.getDate() + 280);
+  const daysUntil = Math.floor((due - sel) / 864e5);
+  const tri = weeks <= 13 ? 1 : weeks <= 27 ? 2 : 3;
+  const pct = Math.min(100, Math.max(0, ((280 - daysUntil) / 280) * 100));
+  return { daysSince, weeks, days, due, daysUntil, tri, pct, dueStr: due.toLocaleDateString("he-IL",{year:"numeric",month:"long",day:"numeric"}) };
+}
+
+function getWeekData(week) {
+  if (weeklyGuidance[week]) return weeklyGuidance[week];
+  const keys = Object.keys(weeklyGuidance).map(Number).sort((a,b)=>a-b);
+  let c = keys[0]; for (const k of keys) { if (k <= week) c = k; else break; }
+  const base = weeklyGuidance[c];
+  const t = week <= 13 ? "ראשון" : week <= 27 ? "שני" : "שלישי";
+  return { ...base, title: `שבוע ${week} – טרימסטר ${t}` };
+}
+
+function getRate(date, wData) {
+  if (!wData) return 0;
+  const done = wData.dailyTasks.filter(t => state.completedTasks[`${date}_${t.id}`]).length;
+  return wData.dailyTasks.length > 0 ? Math.round((done / wData.dailyTasks.length) * 100) : 0;
+}
+
+// ─── BUILD DAILY SUMMARY for WhatsApp ───
+function buildSummary() {
+  const info = calcPregnancy();
+  if (!info) return "";
+  const wData = getWeekData(info.weeks);
+  const date = state.selectedDate;
+  const dateStr = new Date(date).toLocaleDateString("he-IL",{weekday:"long",month:"long",day:"numeric"});
+  const rate = getRate(date, wData);
+  const doneTasks = wData.dailyTasks.filter(t => state.completedTasks[`${date}_${t.id}`]);
+  const undoneTasks = wData.dailyTasks.filter(t => !state.completedTasks[`${date}_${t.id}`]);
+  const dayMood = state.mood[date];
+  const moodEmoji = moods.find(m => m.label === dayMood)?.emoji || "";
+  const daySymptoms = state.symptoms[date] || [];
+  const dayNotes = state.notes[date] || [];
+
+  let msg = `🌸 *עדכון יומי של ${NAME}*\n`;
+  msg += `📅 ${dateStr}\n`;
+  msg += `🤰 שבוע ${info.weeks}+${info.days} | עוד ${info.daysUntil} ימים ללידה\n\n`;
+  msg += `📊 *השלמת משימות: ${rate}%*\n`;
+  if (doneTasks.length > 0) {
+    msg += `\n✅ *הושלם:*\n`;
+    doneTasks.forEach(t => msg += `  ${t.text}\n`);
+  }
+  if (undoneTasks.length > 0) {
+    msg += `\n⬜ *נותר:*\n`;
+    undoneTasks.forEach(t => msg += `  ${t.text}\n`);
+  }
+  if (dayMood) msg += `\n💭 *מצב רוח:* ${moodEmoji} ${dayMood}\n`;
+  if (daySymptoms.length > 0) msg += `\n🩺 *תסמינים:* ${daySymptoms.join(", ")}\n`;
+  if (dayNotes.length > 0) {
+    msg += `\n📝 *הערות:*\n`;
+    dayNotes.forEach(n => msg += `  ${n.text}\n`);
+  }
+  msg += `\n💕 נשלח באהבה מהאפליקציה של ${NAME}`;
+  return msg;
+}
+
+function shareSummary() {
+  const msg = buildSummary();
+  if (navigator.share) {
+    navigator.share({ title: `עדכון יומי – ${NAME}`, text: msg }).catch(() => {
+      copyToClipboard(msg);
+    });
+  } else {
+    // Try WhatsApp direct
+    const encoded = encodeURIComponent(msg);
+    const whatsappUrl = `https://wa.me/?text=${encoded}`;
+    window.open(whatsappUrl, '_blank');
+  }
+}
+
+function sendToOmer() {
+  const msg = buildSummary();
+  const encoded = encodeURIComponent(msg);
+  // Opens WhatsApp - user can choose contact (Omer)
+  const whatsappUrl = `https://wa.me/?text=${encoded}`;
+  window.open(whatsappUrl, '_blank');
+  showToast("נפתח WhatsApp לשליחה לעומר 💕");
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("הועתק! אפשר להדביק בוואטסאפ 📋");
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+    showToast("הועתק! 📋");
+  });
+}
+
+// ─── SETUP ───
+function setEmbryoDay(d) {
+  state.embryoDay = d;
+  document.getElementById("embryo3").classList.toggle("active", d === 3);
+  document.getElementById("embryo5").classList.toggle("active", d === 5);
+}
+
+document.getElementById("setupDate").addEventListener("change", function() {
+  document.getElementById("startBtn").disabled = !this.value;
+});
+
+function startApp() {
+  state.transferDate = document.getElementById("setupDate").value;
+  if (!state.transferDate) return;
+  save();
+  document.getElementById("setup").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  updateAll();
+}
+
+// ─── NAVIGATION ───
+function showView(v) {
+  state.currentView = v;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  const map = { today:"navToday", week:"navWeek", timeline:"navTimeline" };
+  if (map[v]) document.getElementById(map[v]).classList.add("active");
+  document.getElementById("dateSelector").classList.toggle("hidden", v !== "today");
+  renderMain();
+}
+
+function changeDate(dir) {
+  const d = new Date(state.selectedDate); d.setDate(d.getDate() + dir);
+  state.selectedDate = d.toISOString().split("T")[0]; updateAll();
+}
+function goToday() { state.selectedDate = getToday(); updateAll(); }
+
+// ─── RENDER ───
+function updateAll() {
+  const info = calcPregnancy();
+  if (!info) return;
+  document.getElementById("weekNum").textContent = `שבוע ${info.weeks}`;
+  document.getElementById("weekDays").textContent = `+ ${info.days} ימים`;
+  document.getElementById("dueDate").textContent = info.dueStr;
+  document.getElementById("dueDays").textContent = info.daysUntil > 0 ? `עוד ${info.daysUntil} ימים` : "הגיע הזמן! 🎉";
+  document.getElementById("progressFill").style.width = info.pct + "%";
+  document.getElementById("greeting").textContent = getGreeting();
+  ["tri1","tri2","tri3"].forEach((id,i) => document.getElementById(id).classList.toggle("active", info.tri === i + 1));
+  const selDate = new Date(state.selectedDate);
+  document.getElementById("dateText").textContent = selDate.toLocaleDateString("he-IL",{weekday:"long",month:"long",day:"numeric"});
+  document.getElementById("todayLink").classList.toggle("hidden", state.selectedDate === getToday());
+  renderMain();
+}
+
+function renderMain() {
+  const info = calcPregnancy();
+  if (!info) return;
+  const wData = getWeekData(info.weeks);
+  const main = document.getElementById("mainContent");
+  if (state.currentView === "today") renderToday(main, info, wData);
+  else if (state.currentView === "week") renderWeek(main, info, wData);
+  else if (state.currentView === "timeline") renderTimeline(main, info);
+  else if (state.currentView === "settings") renderSettings(main, info);
+}
+
+function renderToday(main, info, wData) {
+  const rate = getRate(state.selectedDate, wData);
+  const daySymptoms = state.symptoms[state.selectedDate] || [];
+  const dayMood = state.mood[state.selectedDate] || "";
+  const dayNotes = state.notes[state.selectedDate] || [];
+  const personalMsg = getPersonalMsg(info.weeks);
+
+  main.innerHTML = `
+    <div class="week-info">
+      <h2>${wData.title}</h2>
+      <p class="subtitle">${wData.subtitle}</p>
+      <p class="personal-msg">${personalMsg}</p>
+      ${(wData.tips||[]).map(t => `<p class="tip">💡 ${t}</p>`).join("")}
+    </div>
+
+    <div class="completion-card">
+      <svg viewBox="0 0 100 100" width="90" height="90">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#F0E6EF" stroke-width="8"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#E8739A" stroke-width="8"
+          stroke-linecap="round" stroke-dasharray="${(rate/100)*264} 264"
+          transform="rotate(-90 50 50)"/>
+        <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+          style="font-size:18px;font-weight:bold;fill:#E8739A">${rate}%</text>
+      </svg>
+      <span class="completion-label">כל הכבוד ${NAME}! 💪</span>
+    </div>
+
+    <div class="section">
+      <h3 class="section-title">📋 המשימות שלך היום</h3>
+      ${wData.dailyTasks.map(t => {
+        const key = `${state.selectedDate}_${t.id}`;
+        const done = state.completedTasks[key];
+        const c = catInfo[t.cat];
+        return `<div class="task-item" style="background:${done?'#F0FFF4':c.bg};border-right-color:${done?'#48BB78':c.border};${done?'opacity:0.75':''}" onclick="toggleTask('${t.id}')">
+          <div class="checkbox ${done?'done':''}">${done?'✓':''}</div>
+          <span class="task-text ${done?'done':''}">${t.text}</span>
+          <span class="category-badge">${c.label}</span>
+        </div>`;
+      }).join("")}
+    </div>
+
+    <button class="share-btn" onclick="sendToOmer()">
+      💌 שלחי עדכון יומי לעומר בוואטסאפ
+    </button>
+
+    <div class="section">
+      <h3 class="section-title">💭 איך את מרגישה, ${NAME}?</h3>
+      <div class="mood-container">
+        ${moods.map(m => `<button class="mood-btn ${dayMood===m.label?'active':''}" onclick="setMood('${m.label}')">
+          <span class="emoji">${m.emoji}</span><span class="label">${m.label}</span>
+        </button>`).join("")}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3 class="section-title">🩺 תסמינים</h3>
+      <div class="symptoms-grid">
+        ${commonSymptoms.map(s => `<button class="symptom-btn ${daySymptoms.includes(s)?'active':''}" onclick="toggleSymptom('${s}')">${s}</button>`).join("")}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3 class="section-title">📝 ההערות שלך</h3>
+      <div class="note-input">
+        <input type="text" id="noteField" class="note-field" placeholder="כתבי הערה, ${NAME}..."
+          onkeydown="if(event.key==='Enter')addNote()">
+        <button class="note-add-btn" onclick="addNote()">+</button>
+      </div>
+      ${dayNotes.map(n => `<div class="note-item"><span class="note-time">${n.time}</span><span class="note-text">${n.text}</span></div>`).join("")}
+    </div>
+
+    ${wData.milestones?.length > 0 ? `<div class="section">
+      <h3 class="section-title">🏆 אבני דרך השבוע</h3>
+      ${wData.milestones.map(m => `<div class="milestone-item"><span class="milestone-icon">⭐</span><span class="milestone-text">${m}</span></div>`).join("")}
+    </div>` : ''}
+
+    <button class="share-btn" onclick="shareSummary()" style="border-color:#48BB78;color:#48BB78">
+      📤 שיתוף סיכום יומי
+    </button>
+  `;
+}
+
+function renderWeek(main, info, wData) {
+  const today = getToday();
+  const sel = new Date(state.selectedDate);
+  const start = new Date(sel); start.setDate(sel.getDate() - sel.getDay());
+  let html = `<div style="padding:16px 0"><h3 class="section-title">📅 השבוע של ${NAME}</h3>`;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const ds = d.toISOString().split("T")[0];
+    const r = getRate(ds, wData);
+    const isToday = ds === today;
+    const dm = state.mood[ds]; const me = moods.find(m=>m.label===dm);
+    html += `<div class="week-day-card ${isToday?'today':''}" onclick="state.selectedDate='${ds}';showView('today');updateAll()">
+      <div class="week-day-header">
+        <span class="week-day-name">${d.toLocaleDateString("he-IL",{weekday:"short"})}</span>
+        <span class="week-day-date">${d.toLocaleDateString("he-IL",{day:"numeric",month:"numeric"})}</span>
+        ${me?`<span style="font-size:20px">${me.emoji}</span>`:''}
+      </div>
+      <div class="week-day-progress">
+        <div class="mini-progress"><div class="mini-progress-fill" style="width:${r}%"></div></div>
+        <span class="week-day-rate">${r}%</span>
+      </div>
+    </div>`;
+  }
+  html += `</div>`; main.innerHTML = html;
+}
+
+function renderTimeline(main, info) {
+  let html = `<div style="padding:16px 0"><h3 class="section-title">🗓️ המסע של ${NAME}</h3>`;
+  timelineMilestones.forEach(ms => {
+    const past = info.weeks >= ms.week, current = info.weeks === ms.week;
+    html += `<div class="timeline-item">
+      <div class="timeline-line">
+        <div class="timeline-dot ${past?'past':''} ${current?'current':''}"></div>
+        <div class="timeline-connector ${past?'past':''}"></div>
+      </div>
+      <div class="timeline-content ${current?'current':''} ${!past&&!current?'future':''}">
+        <span class="timeline-week">שבוע ${ms.week}</span>
+        <span class="timeline-label">${ms.label}</span>
+        ${past?'<span class="timeline-check">✅</span>':''}
+      </div>
+    </div>`;
+  });
+  html += `</div>`; main.innerHTML = html;
+}
+
+function renderSettings(main, info) {
+  main.innerHTML = `<div style="padding:16px 0">
+    <h3 class="section-title">⚙️ הגדרות</h3>
+    <div class="settings-card">
+      <div class="settings-field">
+        <label class="settings-label">📅 תאריך החזרה</label>
+        <input type="date" class="setup-input" value="${state.transferDate||''}" onchange="state.transferDate=this.value;save();updateAll()">
+      </div>
+      <div class="settings-field">
+        <label class="settings-label">🔬 יום עוברון</label>
+        <div class="embryo-picker">
+          <button class="embryo-btn ${state.embryoDay===3?'active':''}" onclick="state.embryoDay=3;save();updateAll();renderMain()">יום 3</button>
+          <button class="embryo-btn ${state.embryoDay===5?'active':''}" onclick="state.embryoDay=5;save();updateAll();renderMain()">יום 5</button>
+        </div>
+      </div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-label">שבוע הריון</span><span class="info-value">${info.weeks}+${info.days}</span></div>
+        <div class="info-item"><span class="info-label">טרימסטר</span><span class="info-value">${info.tri}</span></div>
+        <div class="info-item"><span class="info-label">ימים מההחזרה</span><span class="info-value">${info.daysSince}</span></div>
+        <div class="info-item"><span class="info-label">ימים ללידה</span><span class="info-value">${info.daysUntil}</span></div>
+      </div>
+      <button class="reset-btn" onclick="resetAll()">🗑️ איפוס נתונים</button>
+      <p class="disclaimer">⚠️ אפליקציה זו היא כלי עזר בלבד ואינה מחליפה ייעוץ רפואי מקצועי. תמיד יש להתייעץ עם הרופא/ה.</p>
+    </div>
+  </div>`;
+}
+
+// ─── ACTIONS ───
+function toggleTask(id) {
+  const key = `${state.selectedDate}_${id}`;
+  state.completedTasks[key] = !state.completedTasks[key];
+  if (state.completedTasks[key]) showToast("כל הכבוד, " + NAME + "! ✅");
+  save(); updateAll();
+}
+function setMood(label) { state.mood[state.selectedDate] = label; save(); updateAll(); }
+function toggleSymptom(s) {
+  const key = state.selectedDate;
+  if (!state.symptoms[key]) state.symptoms[key] = [];
+  const idx = state.symptoms[key].indexOf(s);
+  if (idx >= 0) state.symptoms[key].splice(idx, 1);
+  else state.symptoms[key].push(s);
+  save(); updateAll();
+}
+function addNote() {
+  const f = document.getElementById("noteField");
+  if (!f || !f.value.trim()) return;
+  if (!state.notes[state.selectedDate]) state.notes[state.selectedDate] = [];
+  state.notes[state.selectedDate].push({ text: f.value.trim(), time: new Date().toLocaleTimeString("he-IL") });
+  save(); updateAll();
+}
+function resetAll() {
+  if (!confirm(`${NAME}, למחוק את כל הנתונים?`)) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = { transferDate:null, embryoDay:5, completedTasks:{}, notes:{}, symptoms:{}, mood:{}, selectedDate:getToday(), currentView:"today" };
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("setup").classList.remove("hidden");
+}
+
+// ─── INIT ───
+window.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    document.getElementById("loading").classList.add("hidden");
+    if (load() && state.transferDate) {
+      document.getElementById("app").classList.remove("hidden");
+      updateAll();
+    } else {
+      document.getElementById("setup").classList.remove("hidden");
+    }
+  }, 600);
+});
+</script>
+</body>
+</html>
